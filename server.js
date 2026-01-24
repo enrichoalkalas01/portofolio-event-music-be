@@ -46,7 +46,7 @@ App.listen(PORT, () => {
     console.log(`Server is running in port : ${PORT}`);
 });
 
-mongoConnect();
+// mongoConnect();
 
 const Routes = require("./routes/index");
 App.use("/api/v1", Routes);
