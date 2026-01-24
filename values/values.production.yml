@@ -35,17 +35,19 @@ service:
     nodePort: 30801 # hanya untuk NodePort (range: 30000-32767)
 
 # Ingress Configuration
-# ingress:
-#     enabled: true # Enable karena Anda pakai ingress nginx
-#     className: nginx
-#     annotations:
-#         # nginx.ingress.kubernetes.io/rewrite-target: /
-#         nginx.ingress.kubernetes.io/rewrite-target: /$1
-#     hosts:
-#         - host: "" # kosong untuk wildcard, atau isi domain
-#           paths:
-#               - path: /api/golang-test/(.*)
-#                 pathType: ImplementationSpecific
+ingress:
+    enabled: true # Enable karena Anda pakai ingress nginx
+    className: nginx
+    annotations:
+        # nginx.ingress.kubernetes.io/rewrite-target: /
+        nginx.ingress.kubernetes.io/rewrite-target: /$1
+    hosts:
+        - host: "" # kosong untuk wildcard, atau isi domain
+          paths:
+              - path: /server-api/portofolio-event-music-be/(.*)
+                pathType: ImplementationSpecific
+    tls: []
+
 # ingress:
 #     enabled: true
 #     className: nginx
@@ -59,17 +61,17 @@ service:
 #                 pathType: ImplementationSpecific
 #     tls: []
 
-ingress:
-    enabled: false
-    className: nginx
-    annotations:
-        nginx.ingress.kubernetes.io/use-regex: "true"
-    hosts:
-        - host: ""
-          paths:
-              - path: /
-                pathType: Prefix
-    tls: []
+# ingress:
+#     enabled: false
+#     className: nginx
+#     annotations:
+#         nginx.ingress.kubernetes.io/use-regex: "true"
+#     hosts:
+#         - host: ""
+#           paths:
+#               - path: /
+#                 pathType: Prefix
+#     tls: []
 
 # Health Check / Probes
 probe:
