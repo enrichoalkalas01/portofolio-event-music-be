@@ -1,0 +1,166 @@
+# ==============================================
+# HELM CHART FORMAT 3 - RECOMMENDED
+# Gabungan: Simple + Lengkap + Flexible
+# ==============================================
+
+# App Info
+appName: portofolio-event-music-be
+namespace: portofolio
+
+# Replicas
+replicaCount: 1
+
+# Image Configuration
+image:
+    repository: 192.168.20.21/other/portofolio-event-music-be # Registry Anda 192.168.20.21, bukan 192.168.20.11
+    tag: "latest"
+    pullPolicy: Always
+
+# Image Pull Secrets (untuk private registry)
+imagePullSecrets:
+    - name: harbor-creds
+
+# Name Override
+nameOverride: ""
+fullnameOverride: ""
+
+# Container Configuration
+containerPort: 5800
+
+# Service Configuration
+service:
+    type: NodePort # Ganti ke ClusterIP karena pakai Ingress
+    port: 5800
+    targetPort: 5800
+    nodePort: 30801 # hanya untuk NodePort (range: 30000-32767)
+
+# Ingress Configuration
+# ingress:
+#     enabled: true # Enable karena Anda pakai ingress nginx
+#     className: nginx
+#     annotations:
+#         # nginx.ingress.kubernetes.io/rewrite-target: /
+#         nginx.ingress.kubernetes.io/rewrite-target: /$1
+#     hosts:
+#         - host: "" # kosong untuk wildcard, atau isi domain
+#           paths:
+#               - path: /api/golang-test/(.*)
+#                 pathType: ImplementationSpecific
+# ingress:
+#     enabled: true
+#     className: nginx
+#     annotations:
+#         nginx.ingress.kubernetes.io/rewrite-target: /$2
+#         nginx.ingress.kubernetes.io/use-regex: "true"
+#     hosts:
+#         - host: ""
+#           paths:
+#               - path: /portofolio-event-music-be(/|$)(.*)
+#                 pathType: ImplementationSpecific
+#     tls: []
+
+ingress:
+    enabled: false
+    className: nginx
+    annotations:
+        nginx.ingress.kubernetes.io/use-regex: "true"
+    hosts:
+        - host: ""
+          paths:
+              - path: /
+                pathType: Prefix
+    tls: []
+
+# Health Check / Probes
+probe:
+    enabled: false
+    liveness:
+        path: /health # pastikan endpoint ini ada di app
+        port: 5800
+    readiness:
+        path: /health
+        port: 5800
+
+# Resources
+resources:
+    requests:
+        cpu: 100m
+        memory: 128Mi
+    limits:
+        cpu: 200m
+        memory: 256Mi
+
+# Autoscaling (HPA)
+autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 1
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+
+# Environment Variables
+# env: []
+env:
+    - name: PORT
+      value: "5800"
+    - name: HOST
+      value: "0.0.0.0"
+
+# Environment from ConfigMap/Secret
+envFrom: []
+# - configMapRef:
+#     name: app-config
+# - secretRef:
+#     name: app-secret
+
+# Volume Mounts
+volumeMounts: []
+# - name: config-volume
+#   mountPath: /app/config
+
+# Volumes
+volumes: []
+# - name: config-volume
+#   configMap:
+#     name: app-config
+
+# Host Aliases
+hostAliases: []
+# - ip: "192.168.20.8"
+#   hostnames:
+#     - "kafka.local"
+
+# Node Selector
+nodeSelector: {}
+# disktype: ssd
+
+# Tolerations
+tolerations: []
+# - key: "dedicated"
+#   operator: "Equal"
+#   value: "app"
+#   effect: "NoSchedule"
+
+# Affinity
+affinity: {}
+# podAntiAffinity:
+#   requiredDuringSchedulingIgnoredDuringExecution:
+#   - labelSelector:
+#       matchLabels:
+#         app: portofolio-event-music-be
+#     topologyKey: kubernetes.io/hostname
+
+# Pod Security Context
+podSecurityContext: {}
+# fsGroup: 1000
+
+# Container Security Context
+securityContext: {}
+# runAsNonRoot: true
+# runAsUser: 1000
+
+# Service Account
+serviceAccount:
+    create: false
+    name: ""
+    annotations: {}
