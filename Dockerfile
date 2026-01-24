@@ -46,4 +46,4 @@ ENV PORT=${PORT}
 EXPOSE ${PORT}
 
 # Start the app
-CMD ["node", "index.js"]
+CMD ["node", "server.js"]
