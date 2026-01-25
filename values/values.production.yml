@@ -37,7 +37,7 @@ service:
 # Ingress Configuration
 ingress:
     enabled: true
-    className: ingress-endlessapp
+    className: nginx-endlessapp
     annotations:
         nginx.ingress.kubernetes.io/rewrite-target: /$1
         nginx.ingress.kubernetes.io/use-regex: "true"
