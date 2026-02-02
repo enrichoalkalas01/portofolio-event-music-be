@@ -6,7 +6,7 @@ const ErrorHandler = (err, req, res, next) => {
     const message = err.message || "Internal Server Error";
     const nameError = err.name || "Error";
     const stack = process.env.NODE_ENV === "production" ? err.stack : "";
-    const errorsData = err.errors || null;
+    const errorsData = err.errorsData || null;
 
     console.log("Error Handler caught an error:", {
         name: nameError,

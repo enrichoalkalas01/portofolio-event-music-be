@@ -1,19 +1,19 @@
 const mongoose = require("mongoose");
 
-const SystemParamsTypeSchema = new mongoose.Schema(
+const UsersSchema = new mongoose.Schema(
     {
         paramsLabel: {
             type: String,
-            required: false,
+            required: true,
         },
         paramsValue: {
             type: String,
             required: true,
-            unique: true,
+            // unique: true,
         },
-        paramsDescription: {
+        paramsType: {
             type: String,
-            required: false,
+            required: true,
         },
         others: {
             type: Object,
@@ -25,4 +25,4 @@ const SystemParamsTypeSchema = new mongoose.Schema(
     },
 );
 
-module.exports = mongoose.model("SystemParamsType", SystemParamsTypeSchema);
+module.exports = mongoose.model("Users", UsersSchema);

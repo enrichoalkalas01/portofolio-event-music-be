@@ -1,19 +1,24 @@
+// SystemParams.js
 const mongoose = require("mongoose");
 
 const SystemParamsSchema = new mongoose.Schema(
     {
         paramsLabel: {
             type: String,
-            required: true,
+            required: false,
         },
         paramsValue: {
             type: String,
             required: true,
-            // unique: true,
         },
         paramsType: {
-            type: String,
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "SystemParamsType",
             required: true,
+        },
+        paramsDescription: {
+            type: String,
+            required: false,
         },
         others: {
             type: Object,
