@@ -10,5 +10,6 @@ Routes.put("/:id", SystemParams.Update);
 Routes.delete("/:id", SystemParams.Delete);
 Routes.get("/", SystemParams.Get);
 Routes.get("/:id", SystemParams.GetDetailByID);
+Routes.get("/type/:type_id", SystemParams.GetDetailByType);
 
 module.exports = Routes;

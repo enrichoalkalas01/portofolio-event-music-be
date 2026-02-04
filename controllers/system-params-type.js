@@ -9,7 +9,7 @@ const Create = async (req, res, next) => {
     try {
         let DataPassing = {
             paramsLabel: paramsLabel,
-            paramsValue: paramsValue,
+            paramsValue: paramsValue?.toUpperCase(),
             paramsDescription: paramsDescription,
         };
 
@@ -31,7 +31,7 @@ const Update = async (req, res, next) => {
     try {
         let DataPassing = {
             paramsLabel: paramsLabel,
-            paramsValue: paramsValue,
+            paramsValue: paramsValue?.toUpperCase(),
             paramsDescription: paramsDescription,
         };
 
