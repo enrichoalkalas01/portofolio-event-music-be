@@ -39,7 +39,7 @@ const EventsSchema = new mongoose.Schema(
             required: false,
         },
         thumbnail: {
-            type: String,
+            type: Array,
             required: false,
         },
         images: {
@@ -52,8 +52,8 @@ const EventsSchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ["active", "cancelled", "completed", "draft"],
-            default: "active",
+            enum: ["ACTIVE", "CANCELLED", "COMPLETED", "DRAFT"],
+            default: "ACTIVE",
         },
         max_participants: {
             type: Number,

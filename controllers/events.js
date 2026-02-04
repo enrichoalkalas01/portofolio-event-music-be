@@ -1,21 +1,19 @@
-const Moment = require("moment")
+const Moment = require("moment");
 const validator = require("fastest-validator");
-const { ObjectId } = require("mongodb")
+const { ObjectId } = require("mongodb");
 
-const {
-    ResponseHandlerSuccess
-} = require("../middlewares/response-handler")
+const { ResponseHandlerSuccess } = require("../middlewares/response-handler");
 
-const EventsModel = require("../libs/mongodb/schema/events")
+const EventsModel = require("../libs/mongodb/schema/events");
 
 const v = new validator();
 const schemaValidation = {
     title: {
-        type: "string", 
-        min: 3,           // minimal 3 karakter
-        max: 100,         // maksimal 100 karakter
-        empty: false,     // tidak boleh kosong
-        trim: true        // hapus spasi di awal/akhir
+        type: "string",
+        min: 3, // minimal 3 karakter
+        max: 100, // maksimal 100 karakter
+        empty: false, // tidak boleh kosong
+        trim: true, // hapus spasi di awal/akhir
     },
     excerpt: { type: "string", max: 200, optional: true },
     description: { type: "string", optional: true },
@@ -27,10 +25,10 @@ const schemaValidation = {
     status: { type: "string", optional: true },
     max_participants: {
         type: "number",
-        positive: true,   // harus positif
-        integer: true,    // harus integer
+        positive: true, // harus positif
+        integer: true, // harus integer
         min: 1,
-        max: 10000
+        max: 10000,
     },
     price: {
         type: "number",
@@ -41,9 +39,22 @@ const schemaValidation = {
 };
 
 const Create = async (req, res, next) => {
-    const { title, excerpt, description, event_date_start, event_date_end, location, vendor, sponsor, status, max_participants, price } = req.body
+    const {
+        title,
+        excerpt,
+        description,
+        event_date_start,
+        event_date_end,
+        location,
+        vendor,
+        sponsor,
+        status,
+        max_participants,
+        price,
+    } = req.body;
 
     try {
+        console.log(req.body);
         let Authorization = process.env.authorization
             ? JSON.parse(process.env.authorization)
             : null;
@@ -57,11 +68,11 @@ const Create = async (req, res, next) => {
 
         const validate = v.compile(schemaValidation);
         const resultValidate = validate(req.body);
-        if ( resultValidate?.length > 0 ) {
+        if (resultValidate?.length > 0) {
             throw {
                 message: "error request validation",
-                errorsData: resultValidate
-            }
+                errorsData: resultValidate,
+            };
         }
 
         const DataPassing = {
@@ -84,25 +95,42 @@ const Create = async (req, res, next) => {
             max_participants: max_participants,
             price: price,
             others: {},
-        }
+        };
 
-        await EventsModel.create(DataPassing)
+        await EventsModel.create(DataPassing);
 
         ResponseHandlerSuccess({
             req,
             res,
             message: "Create  Success",
-        })
+        });
     } catch (error) {
-        next(error)
+        next(error);
     }
-}
+};
 
 const Update = async (req, res, next) => {
-    const { id } = req.params
-    const { title, excerpt, description, event_date_start, event_date_end, location, vendor, sponsor, status, max_participants, price } = req.body
-    
+    const { id } = req.params;
+    const {
+        title,
+        excerpt,
+        description,
+        event_date_start,
+        event_date_end,
+        location,
+        vendor,
+        sponsor,
+        status,
+        max_participants,
+        price,
+        categories,
+
+        images,
+        thumbnail,
+    } = req.body;
+
     try {
+        console.log(req.body);
         let Authorization = process.env.authorization
             ? JSON.parse(process.env.authorization)
             : null;
@@ -116,47 +144,52 @@ const Update = async (req, res, next) => {
 
         const validate = v.compile(schemaValidation);
         const resultValidate = validate(req.body);
-        if ( resultValidate?.length > 0 ) {
+        if (resultValidate?.length > 0) {
             throw {
                 message: "error request validation",
-                errorsData: resultValidate
-            }
+                errorsData: resultValidate,
+            };
         }
 
-        let DataPassing = {}
-        if ( title ) DataPassing["title"] = title
-        if ( excerpt ) DataPassing["excerpt"] = excerpt
-        if ( description ) DataPassing["description"] = description
-        if ( event_date_start ) DataPassing["eventDate.start"] = event_date_start
-        if ( event_date_end ) DataPassing["eventDate.end"] = event_date_end
-        if ( location ) DataPassing["location"] = location
-        if ( vendor ) DataPassing["vendor"] = vendor
-        if ( sponsor ) DataPassing["sponsor"] = sponsor
-        if ( status ) DataPassing["status"] = status
-        if ( max_participants ) DataPassing["max_participants"] = max_participants
-        if ( price ) DataPassing["price"] = price
+        let DataPassing = {};
+        if (title) DataPassing["title"] = title;
+        if (excerpt) DataPassing["excerpt"] = excerpt;
+        if (description) DataPassing["description"] = description;
+        if (event_date_start) DataPassing["eventDate.start"] = event_date_start;
+        if (event_date_end) DataPassing["eventDate.end"] = event_date_end;
+        if (location) DataPassing["location"] = location;
+        if (vendor) DataPassing["vendor"] = vendor;
+        if (sponsor) DataPassing["sponsor"] = sponsor;
+        if (status) DataPassing["status"] = status;
+        if (max_participants)
+            DataPassing["max_participants"] = max_participants;
+        if (price) DataPassing["price"] = price;
+        if (categories) DataPassing["categories"] = categories;
+
+        if (images) DataPassing["images"] = images;
+        if (thumbnail) DataPassing["thumbnail"] = thumbnail;
 
         await EventsModel.findOneAndUpdate(
             {
-                _id: new ObjectId(id)
+                _id: new ObjectId(id),
             },
             {
-                $set: DataPassing
-            }
-        )
+                $set: DataPassing,
+            },
+        );
 
         ResponseHandlerSuccess({
             req,
             res,
             message: "Update Success",
-        })
+        });
     } catch (error) {
-        next(error)
+        next(error);
     }
-}
+};
 
 const Delete = async (req, res, next) => {
-    const { id } = req.params
+    const { id } = req.params;
 
     try {
         let Authorization = process.env.authorization
@@ -169,26 +202,26 @@ const Delete = async (req, res, next) => {
                 message: "Unauthorized!",
             };
         }
-        
-        await EventsModel.deleteOne({ _id: id })
+
+        await EventsModel.deleteOne({ _id: id });
 
         ResponseHandlerSuccess({
             req,
             res,
             message: "Delete Success",
-        })
+        });
     } catch (error) {
-        next(error)
+        next(error);
     }
-}
+};
 
 const Get = async (req, res, next) => {
     try {
-        const queryData = {}
+        const queryData = {};
         const [getData, total] = await Promise.all([
             EventsModel.find(queryData),
             EventsModel.countDocuments(queryData),
-        ]) 
+        ]);
 
         ResponseHandlerSuccess({
             req,
@@ -196,27 +229,27 @@ const Get = async (req, res, next) => {
             data: getData,
             total: total,
             message: "Get list data Success",
-        })
+        });
     } catch (error) {
-        next(error)
+        next(error);
     }
-}
+};
 
 const GetDetailByID = async (req, res, next) => {
-    const { id } = req.params
+    const { id } = req.params;
     try {
-        const getData = await EventsModel.findOne({ _id: id })
+        const getData = await EventsModel.findOne({ _id: id });
 
         ResponseHandlerSuccess({
             req,
             res,
             data: getData,
             message: "Get By ID  Success",
-        })
+        });
     } catch (error) {
-        next(error)
+        next(error);
     }
-}
+};
 
 module.exports = {
     Create,
@@ -224,7 +257,7 @@ module.exports = {
     Delete,
     Get,
     GetDetailByID,
-}
+};
 
 /*
 

@@ -39,11 +39,11 @@ COPY --chown=expressjs:nodejs . .
 USER expressjs
 
 # Use ARG to allow build-time port configuration
-ARG PORT=5800
-ENV PORT=${PORT}
+# ARG PORT=5800
+# ENV PORT=${PORT}
 
 # Expose the port dynamically
-EXPOSE ${PORT}
+EXPOSE 5800
 
 # Start the app
 CMD ["node", "server.js"]
