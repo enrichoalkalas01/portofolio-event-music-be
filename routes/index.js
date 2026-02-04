@@ -10,6 +10,7 @@ const ComingSoonRoutes = require("./coming-soon");
 const TransactionsRoutes = require("./transactions");
 const UsersRoutes = require("./users");
 const FilesRoutes = require("./files");
+const ImagesRoutes = require("./images");
 
 // External Routes Usage
 Routes.use("/authentication", AuthenticationRoutes);
@@ -20,5 +21,6 @@ Routes.use("/coming-soon", ComingSoonRoutes);
 Routes.use("/users", UsersRoutes);
 Routes.use("/transactions", TransactionsRoutes);
 Routes.use("/files", FilesRoutes);
+Routes.use("/images", ImagesRoutes);
 
 module.exports = Routes;
