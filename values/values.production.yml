@@ -122,6 +122,12 @@ env:
       value: "false"
     - name: "MINIO_DEFAULT_BUCKET"
       value: "portofolio-event-music"
+    - name: MIDTRANS_MERCHANT_ID
+      value: "G662361665"
+    - name: MIDTRANS_CLIENT_KEY
+      value: "SB-Mid-client-aOcgOhxD7Or8nkcF"
+    - name: MIDTRANS_SERVER_KEY
+      value: "SB-Mid-server-7OOJtkV08r6KUnMJq3CsdugS"
 
 # Environment from ConfigMap/Secret
 envFrom: []
