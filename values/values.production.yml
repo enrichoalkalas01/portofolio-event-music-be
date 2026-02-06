@@ -128,6 +128,10 @@ env:
       value: "SB-Mid-client-aOcgOhxD7Or8nkcF"
     - name: MIDTRANS_SERVER_KEY
       value: "SB-Mid-server-7OOJtkV08r6KUnMJq3CsdugS"
+    - name: MIDTRANS_CALLBACK_URL
+      value: "https://endlessapp.my.id/server-api/portofolio-event-music-be/api/v1"
+    - name: MIDTRANS_CALLBACK_URL_DONE
+      value: "https://endlessapp.my.id/"
 
 # Environment from ConfigMap/Secret
 envFrom: []

@@ -1,18 +1,38 @@
 const mongoose = require("mongoose");
 
-const UsersSchema = new mongoose.Schema(
+const TransactionsSchema = new mongoose.Schema(
     {
-        paramsLabel: {
+        event_id: {
             type: String,
             required: true,
         },
-        paramsValue: {
+        status_transaction: {
             type: String,
-            required: true,
-            // unique: true,
+            required: false,
+            default: "no_transaction",
+            enum: [
+                "no_transaction",
+                "checkout",
+                "cancelled",
+                "failed",
+                "pending",
+                "success",
+            ],
         },
-        paramsType: {
-            type: String,
+        request: {
+            type: Object,
+            required: false,
+        },
+        payment: {
+            type: Object,
+            required: false,
+        },
+        settlement: {
+            type: Object,
+            required: false,
+        },
+        user: {
+            type: Object,
             required: true,
         },
         others: {
@@ -25,4 +45,4 @@ const UsersSchema = new mongoose.Schema(
     },
 );
 
-module.exports = mongoose.model("Users", UsersSchema);
+module.exports = mongoose.model("Transactions", TransactionsSchema);
