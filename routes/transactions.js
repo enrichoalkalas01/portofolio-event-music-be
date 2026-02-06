@@ -2,13 +2,13 @@ const Express = require("express");
 const Routes = Express.Router();
 
 // Controllers
-const SystemParamsType = require("../controllers/system-params-type");
+const Transactions = require("../controllers/transactions");
 
 // Routes
-Routes.post("/", SystemParamsType.Create);
-Routes.put("/:id", SystemParamsType.Update);
-Routes.delete("/:id", SystemParamsType.Delete);
-Routes.get("/", SystemParamsType.Get);
-Routes.get("/:id", SystemParamsType.GetDetailByID);
+Routes.post("/", Transactions.Create);
+Routes.put("/:id", Transactions.Update);
+Routes.delete("/:id", Transactions.Delete);
+Routes.get("/", Transactions.Get);
+Routes.get("/:id", Transactions.GetDetailByID);
 
 module.exports = Routes;
