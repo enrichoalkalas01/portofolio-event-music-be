@@ -4,6 +4,11 @@ const { ObjectId } = require("mongodb");
 
 const { ResponseHandlerSuccess } = require("../middlewares/response-handler");
 
+const {
+    BuildQueryOptions2,
+    BuildQueryOptions3,
+} = require("../libs/mongodb/functions/filters");
+
 const EventsModel = require("../libs/mongodb/schema/events");
 
 const v = new validator();
@@ -254,12 +259,62 @@ const GetDetailByID = async (req, res, next) => {
     }
 };
 
+const GetListlByComingSoon = async (req, res, next) => {
+    const { sort } = req.query;
+    try {
+        // let sortingFilter = { createdAt: -1 };
+        let sortingFilter = {};
+        let andFilters = [
+            {
+                "others.coming_soon": "YES",
+            },
+        ];
+
+        const QueryDataPassing = {
+            req,
+            QueryFields: ["title"],
+            requiredFilters: [],
+            optionalFilters: ["title"],
+            arrayFilters: [""],
+            customFilters: andFilters.length > 0 ? { $and: andFilters } : {},
+            fieldMapping: {
+                search: "title",
+            },
+            excludeFields: [],
+            // defaultSort: {},
+        };
+
+        const QueryOptions2 = BuildQueryOptions3(QueryDataPassing);
+        const [getData, total] = await Promise.all([
+            EventsModel.find(QueryOptions2.query)
+                .sort(sortingFilter)
+                .limit(QueryOptions2.pagination.size)
+                .skip(
+                    (QueryOptions2.pagination.page - 1) *
+                        QueryOptions2.pagination.size,
+                ),
+            EventsModel.countDocuments(QueryOptions2.query),
+        ]);
+
+        ResponseHandlerSuccess({
+            req,
+            res,
+            data: getData,
+            total: total,
+            message: "Get list data Success",
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     Create,
     Update,
     Delete,
     Get,
     GetDetailByID,
+    GetListlByComingSoon,
 };
 
 /*

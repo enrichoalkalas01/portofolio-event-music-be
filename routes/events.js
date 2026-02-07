@@ -8,13 +8,14 @@ const Events = require("../controllers/events");
 const {
     CheckAuthorization,
     VerifyAuthorization,
-} = require("../middlewares/authorization")
+} = require("../middlewares/authorization");
 
 // Routes
 Routes.post("/", [CheckAuthorization, VerifyAuthorization], Events.Create);
 Routes.put("/:id", [CheckAuthorization, VerifyAuthorization], Events.Update);
 Routes.delete("/:id", [CheckAuthorization, VerifyAuthorization], Events.Delete);
 Routes.get("/", Events.Get);
+Routes.get("/coming-soon", Events.GetListlByComingSoon);
 Routes.get("/:id", Events.GetDetailByID);
 
 module.exports = Routes;
