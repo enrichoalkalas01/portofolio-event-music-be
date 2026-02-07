@@ -15,7 +15,7 @@ const schemaValidation = {
         empty: false, // tidak boleh kosong
         trim: true, // hapus spasi di awal/akhir
     },
-    excerpt: { type: "string", max: 200, optional: true },
+    excerpt: { type: "string", min: 1, optional: true },
     description: { type: "string", optional: true },
     event_date_start: { type: "date", convert: true, optional: false },
     event_date_end: { type: "date", convert: true, optional: false },
@@ -28,7 +28,6 @@ const schemaValidation = {
         positive: true, // harus positif
         integer: true, // harus integer
         min: 1,
-        max: 10000,
     },
     price: {
         type: "number",
@@ -94,7 +93,9 @@ const Create = async (req, res, next) => {
             updatedBy: Authorization?.username,
             max_participants: max_participants,
             price: price,
-            others: {},
+            others: {
+                coming_soon: req.body?.coming_soon || "NO",
+            },
         };
 
         await EventsModel.create(DataPassing);
@@ -168,6 +169,8 @@ const Update = async (req, res, next) => {
 
         if (images) DataPassing["images"] = images;
         if (thumbnail) DataPassing["thumbnail"] = thumbnail;
+        if (req.body)
+            DataPassing["others.coming_soon"] = req.body?.coming_soon || "NO";
 
         await EventsModel.findOneAndUpdate(
             {
