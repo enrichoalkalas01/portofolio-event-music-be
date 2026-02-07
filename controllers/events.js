@@ -225,10 +225,32 @@ const Delete = async (req, res, next) => {
 
 const Get = async (req, res, next) => {
     try {
-        const queryData = {};
+        let sortingFilter = {};
+        let andFilters = [];
+        const QueryDataPassing = {
+            req,
+            QueryFields: ["title"],
+            requiredFilters: [],
+            optionalFilters: ["title"],
+            arrayFilters: [""],
+            customFilters: andFilters.length > 0 ? { $and: andFilters } : {},
+            fieldMapping: {
+                search: "title",
+            },
+            excludeFields: [],
+            // defaultSort: {},
+        };
+
+        const QueryOptions2 = BuildQueryOptions3(QueryDataPassing);
         const [getData, total] = await Promise.all([
-            EventsModel.find(queryData),
-            EventsModel.countDocuments(queryData),
+            EventsModel.find(QueryOptions2.query)
+                .sort(sortingFilter)
+                .limit(QueryOptions2.pagination.size)
+                .skip(
+                    (QueryOptions2.pagination.page - 1) *
+                        QueryOptions2.pagination.size,
+                ),
+            EventsModel.countDocuments(QueryOptions2.query),
         ]);
 
         ResponseHandlerSuccess({
