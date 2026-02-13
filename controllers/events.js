@@ -40,6 +40,7 @@ const schemaValidation = {
         default: 0,
         optional: false,
     },
+    coming_soon: { type: "string", optional: true },
 };
 
 const Create = async (req, res, next) => {
@@ -55,6 +56,7 @@ const Create = async (req, res, next) => {
         status,
         max_participants,
         price,
+        coming_soon,
     } = req.body;
 
     try {
@@ -99,7 +101,7 @@ const Create = async (req, res, next) => {
             max_participants: max_participants,
             price: price,
             others: {
-                coming_soon: req.body?.coming_soon || "NO",
+                coming_soon: coming_soon || "NO",
             },
         };
 
@@ -133,6 +135,7 @@ const Update = async (req, res, next) => {
 
         images,
         thumbnail,
+        coming_soon,
     } = req.body;
 
     try {
@@ -174,8 +177,8 @@ const Update = async (req, res, next) => {
 
         if (images) DataPassing["images"] = images;
         if (thumbnail) DataPassing["thumbnail"] = thumbnail;
-        if (req.body)
-            DataPassing["others.coming_soon"] = req.body?.coming_soon || "NO";
+        if (coming_soon)
+            DataPassing["others.coming_soon"] = coming_soon || "NO";
 
         await EventsModel.findOneAndUpdate(
             {
@@ -253,10 +256,12 @@ const Get = async (req, res, next) => {
             EventsModel.countDocuments(QueryOptions2.query),
         ]);
 
+        console.log(getData);
+
         ResponseHandlerSuccess({
             req,
             res,
-            data: getData,
+            data: getData || [],
             total: total,
             message: "Get list data Success",
         });
