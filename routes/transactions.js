@@ -26,8 +26,15 @@ Routes.put(
 
 Routes.delete("/:id", Transactions.Delete);
 
-Routes.get("/", Transactions.Get);
-Routes.get("/:id", Transactions.GetDetailByID);
+Routes.get("/admin", Transactions.GetAdmin);
+Routes.get("/admin/:id", Transactions.GetDetailByIDAdmin);
+
+Routes.get("/", [CheckAuthorization, VerifyAuthorization], Transactions.Get);
+Routes.get(
+    "/:id",
+    [CheckAuthorization, VerifyAuthorization],
+    Transactions.GetDetailByID,
+);
 
 Routes.get("/:id/accept", Transactions.TransactionApprove);
 

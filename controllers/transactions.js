@@ -198,7 +198,20 @@ const Delete = async (req, res, next) => {
 
 const Get = async (req, res, next) => {
     try {
-        const matchStage = {};
+        let Authorization = process.env.authorization
+            ? JSON.parse(process.env.authorization)
+            : null;
+
+        if (!Authorization) {
+            throw {
+                status: 401,
+                message: "Unauthorized!",
+            };
+        }
+
+        const matchStage = {
+            "user.username": Authorization?.username,
+        };
 
         const [getData, countResult] = await Promise.all([
             TransactionModel.aggregate([
@@ -254,8 +267,24 @@ const Get = async (req, res, next) => {
 const GetDetailByID = async (req, res, next) => {
     const { id } = req.params;
     try {
+        let Authorization = process.env.authorization
+            ? JSON.parse(process.env.authorization)
+            : null;
+
+        if (!Authorization) {
+            throw {
+                status: 401,
+                message: "Unauthorized!",
+            };
+        }
+
         const getData = await TransactionModel.aggregate([
-            { $match: { _id: new ObjectId(id) } },
+            {
+                $match: {
+                    _id: new ObjectId(id),
+                    "user.username": Authorization?.username,
+                },
+            },
             {
                 $addFields: {
                     event_id_object: {
@@ -379,6 +408,115 @@ const TransactionApprove = async (req, res, next) => {
     }
 };
 
+const GetAdmin = async (req, res, next) => {
+    try {
+        const matchStage = {};
+
+        const [getData, countResult] = await Promise.all([
+            TransactionModel.aggregate([
+                { $match: matchStage },
+                { $sort: { createdAt: -1 } },
+                {
+                    $addFields: {
+                        event_id_object: {
+                            $convert: {
+                                input: "$event_id",
+                                to: "objectId",
+                                onError: null,
+                                onNull: null,
+                            },
+                        },
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "events",
+                        localField: "event_id_object",
+                        foreignField: "_id",
+                        as: "event",
+                    },
+                },
+                {
+                    $unwind: {
+                        path: "$event",
+                        preserveNullAndEmptyArrays: true,
+                    },
+                },
+                {
+                    $project: {
+                        event_id_object: 0,
+                    },
+                },
+            ]).exec(),
+            TransactionModel.countDocuments(matchStage),
+        ]);
+
+        ResponseHandlerSuccess({
+            req,
+            res,
+            data: getData,
+            total: countResult,
+            message: "Get list data Success",
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+const GetDetailByIDAdmin = async (req, res, next) => {
+    const { id } = req.params;
+    try {
+        const getData = await TransactionModel.aggregate([
+            { $match: { _id: new ObjectId(id) } },
+            {
+                $addFields: {
+                    event_id_object: {
+                        $convert: {
+                            input: "$event_id",
+                            to: "objectId",
+                            onError: null,
+                            onNull: null,
+                        },
+                    },
+                },
+            },
+            {
+                $lookup: {
+                    from: "events",
+                    localField: "event_id_object",
+                    foreignField: "_id",
+                    as: "event",
+                },
+            },
+            {
+                $unwind: {
+                    path: "$event",
+                    preserveNullAndEmptyArrays: true,
+                },
+            },
+            {
+                $project: {
+                    event_id_object: 0,
+                },
+            },
+        ]).exec();
+
+        const result = getData?.[0];
+        if (!result) {
+            throw { status: 404, message: "transaction is not found" };
+        }
+
+        ResponseHandlerSuccess({
+            req,
+            res,
+            data: result,
+            message: "Get By ID Success",
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     Create,
     Update,
@@ -386,4 +524,7 @@ module.exports = {
     Get,
     GetDetailByID,
     TransactionApprove,
+
+    GetAdmin,
+    GetDetailByIDAdmin,
 };

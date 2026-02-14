@@ -139,7 +139,6 @@ const Update = async (req, res, next) => {
     } = req.body;
 
     try {
-        console.log(req.body);
         let Authorization = process.env.authorization
             ? JSON.parse(process.env.authorization)
             : null;
