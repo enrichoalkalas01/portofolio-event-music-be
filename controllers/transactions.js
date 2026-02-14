@@ -152,7 +152,6 @@ const Update = async (req, res, next) => {
         console.log(createTransaction);
 
         const tranasactionData = {
-            event_id: id,
             status_transaction: "pending",
             request: req.body,
             payment: parameter,
@@ -199,17 +198,52 @@ const Delete = async (req, res, next) => {
 
 const Get = async (req, res, next) => {
     try {
-        const queryData = {};
-        const [getData, total] = await Promise.all([
-            TransactionModel.find(queryData),
-            TransactionModel.countDocuments(queryData),
+        const matchStage = {};
+
+        const [getData, countResult] = await Promise.all([
+            TransactionModel.aggregate([
+                { $match: matchStage },
+                { $sort: { createdAt: -1 } },
+                {
+                    $addFields: {
+                        event_id_object: {
+                            $convert: {
+                                input: "$event_id",
+                                to: "objectId",
+                                onError: null,
+                                onNull: null,
+                            },
+                        },
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "events",
+                        localField: "event_id_object",
+                        foreignField: "_id",
+                        as: "event",
+                    },
+                },
+                {
+                    $unwind: {
+                        path: "$event",
+                        preserveNullAndEmptyArrays: true,
+                    },
+                },
+                {
+                    $project: {
+                        event_id_object: 0,
+                    },
+                },
+            ]).exec(),
+            TransactionModel.countDocuments(matchStage),
         ]);
 
         ResponseHandlerSuccess({
             req,
             res,
             data: getData,
-            total: total,
+            total: countResult,
             message: "Get list data Success",
         });
     } catch (error) {

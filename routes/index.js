@@ -9,6 +9,7 @@ const EventsRoutes = require("./events");
 const ComingSoonRoutes = require("./coming-soon");
 const TransactionsRoutes = require("./transactions");
 const UsersRoutes = require("./users");
+const SavedRoutes = require("./saved");
 const FilesRoutes = require("./files");
 const ImagesRoutes = require("./images");
 
@@ -20,6 +21,7 @@ Routes.use("/events", EventsRoutes);
 Routes.use("/coming-soon", ComingSoonRoutes);
 Routes.use("/users", UsersRoutes);
 Routes.use("/transactions", TransactionsRoutes);
+Routes.use("/saved", SavedRoutes);
 Routes.use("/files", FilesRoutes);
 Routes.use("/images", ImagesRoutes);
 
