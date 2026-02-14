@@ -224,7 +224,14 @@ const GetDetailByID = async (req, res, next) => {
             { $match: { _id: new ObjectId(id) } },
             {
                 $addFields: {
-                    event_id_object: { $toObjectId: "$event_id" }, // convert string ke ObjectId
+                    event_id_object: {
+                        $convert: {
+                            input: "$event_id",
+                            to: "objectId",
+                            onError: null,
+                            onNull: null,
+                        },
+                    },
                 },
             },
             {
@@ -243,24 +250,21 @@ const GetDetailByID = async (req, res, next) => {
             },
             {
                 $project: {
-                    event_id_object: 0, // hapus field temporary
+                    event_id_object: 0,
                 },
             },
         ]).exec();
 
         const result = getData?.[0];
         if (!result) {
-            throw {
-                status: 404,
-                message: "transaction is not found",
-            };
+            throw { status: 404, message: "transaction is not found" };
         }
 
         ResponseHandlerSuccess({
             req,
             res,
             data: result,
-            message: "Get By ID  Success",
+            message: "Get By ID Success",
         });
     } catch (error) {
         next(error);
