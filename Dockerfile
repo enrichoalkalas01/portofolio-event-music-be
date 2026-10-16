@@ -2,7 +2,7 @@
 FROM node:20-alpine AS deps
 
 # Install pnpm
-RUN npm install -g pnpm
+RUN npm install -g pnpm@10.33.0
 
 # Configure pnpm for better network resilience
 RUN pnpm config set network-timeout 300000 && \
