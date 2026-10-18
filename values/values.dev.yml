@@ -1,8 +1,8 @@
-appName: portofolio-event-music-be-dev
+appName: portofolio-event-music-be
 namespace: portofolio
 replicaCount: 1
 image:
-    repository: 192.168.20.21/other/portofolio-event-music-be-dev
+    repository: 192.168.20.21/other/portofolio-event-music-be
     tag: "latest"
     pullPolicy: Always
 imagePullSecrets:
@@ -54,7 +54,7 @@ env:
       value: "http://192.168.20.11:31183/"
 vaultRuntime:
     enabled: true
-    path: portofolio-event-music-be-dev
+    path: portofolio-event-music-be
     dataFrom: true
     storeName: vault-backend
     storeKind: ClusterSecretStore
