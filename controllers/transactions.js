@@ -11,7 +11,7 @@ const MidtransClientKey = process.env.MIDTRANS_CLIENT_KEY;
 const MidtransServerKey = process.env.MIDTRANS_SERVER_KEY;
 const BaseUrl =
     process.env.MIDTRANS_CALLBACK_URL || `http://localhost:5800/api/v1`;
-const FrontendUrl = process.env.MIDTRANS_CALLBACK_URL_DONE || "http://localhost:6500";
+const FrontendUrl = (process.env.MIDTRANS_CALLBACK_URL_DONE || "http://localhost:6500").replace(/\/+$/, "");
 
 const TAX_PERCENT = 11;
 const MAX_QTY_PER_ORDER = 4;
