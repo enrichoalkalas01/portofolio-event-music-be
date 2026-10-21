@@ -9,9 +9,7 @@ const EventsModel = require("../libs/mongodb/schema/events");
 const SaveEvent = async (req, res, next) => {
     const { id } = req.params;
     try {
-        const Authorization = process.env.authorization
-            ? JSON.parse(process.env.authorization)
-            : null;
+        const Authorization = req.user;
 
         if (!Authorization) {
             throw { status: 401, message: "Unauthorized!" };
@@ -60,9 +58,7 @@ const SaveEvent = async (req, res, next) => {
 // Get all saved events for the authenticated user
 const GetSavedEvents = async (req, res, next) => {
     try {
-        const Authorization = process.env.authorization
-            ? JSON.parse(process.env.authorization)
-            : null;
+        const Authorization = req.user;
 
         if (!Authorization) {
             throw { status: 401, message: "Unauthorized!" };
@@ -98,9 +94,7 @@ const GetSavedEvents = async (req, res, next) => {
 const RemoveSavedEvent = async (req, res, next) => {
     const { id } = req.params;
     try {
-        const Authorization = process.env.authorization
-            ? JSON.parse(process.env.authorization)
-            : null;
+        const Authorization = req.user;
 
         if (!Authorization) {
             throw { status: 401, message: "Unauthorized!" };
@@ -131,9 +125,7 @@ const RemoveSavedEvent = async (req, res, next) => {
 const CheckSaved = async (req, res, next) => {
     const { id } = req.params;
     try {
-        const Authorization = process.env.authorization
-            ? JSON.parse(process.env.authorization)
-            : null;
+        const Authorization = req.user;
 
         if (!Authorization) {
             throw { status: 401, message: "Unauthorized!" };

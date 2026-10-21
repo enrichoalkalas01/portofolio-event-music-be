@@ -13,28 +13,49 @@ Dotenv.config({ path: "./.env" });
 const mongoConnect = require("./libs/mongodb/connection");
 
 const PORT = process.env.PORT || 5800;
+const isProduction = process.env.NODE_ENV === "production";
+
+// CORS: comma separated list in CORS_ORIGINS, "*" when unset (dev).
+const corsOrigins = process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(",").map((o) => o.trim())
+    : "*";
+
+App.set("trust proxy", 1);
+App.disable("x-powered-by");
 
 App.use(
     Cors({
-        origin: "*",
-        credentials: true,
+        origin: corsOrigins,
+        credentials: corsOrigins !== "*",
         methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
     }),
 );
 
-App.use(Morgan("dev"));
-App.use(Express.urlencoded({ extended: true }));
-App.use(Express.json({ limit: "50mb" }));
+App.use(Morgan(isProduction ? "combined" : "dev"));
+App.use(Express.urlencoded({ extended: true, limit: "5mb" }));
+App.use(Express.json({ limit: "5mb" }));
 App.use(
     rateLimit({
-        windowMs: 15 * 60 * 1000, // 15 minutes
-        max: 10000, // limit each IP to 10.000 requests per windowMs
-        message: "Too many requests from this IP, please try again later.",
+        windowMs: 15 * 60 * 1000,
+        max: 10000,
+        standardHeaders: true,
+        legacyHeaders: false,
+        message: { status: "Error", statusCode: 429, message: "Too many requests, please try again later." },
     }),
 );
 
-App.use(Express.json());
+// Stricter limit for credential endpoints.
+App.use(
+    "/api/v1/authentication",
+    rateLimit({
+        windowMs: 15 * 60 * 1000,
+        max: 100,
+        standardHeaders: true,
+        legacyHeaders: false,
+        message: { status: "Error", statusCode: 429, message: "Too many attempts, please try again later." },
+    }),
+);
 
 const uploadsDir = path.join(__dirname, "public");
 if (!fs.existsSync(uploadsDir)) {
@@ -42,20 +63,25 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 App.use("/public", Express.static("public"));
-App.listen(PORT, () => {
-    console.log(`Server is running in port : ${PORT}`);
-});
 
-mongoConnect();
+App.get(["/", "/health"], (req, res) => {
+    res.json({ status: "ok", service: "portofolio-event-music-be", time: new Date().toISOString() });
+});
 
 const Routes = require("./routes/index");
 App.use("/api/v1", Routes);
 
 App.use((req, res, next) => {
-    const error = new Error("Not Found");
+    const error = new Error(`Route not found: ${req.method} ${req.originalUrl}`);
     error.statusCode = 404;
     next(error);
 });
 
 const ErrorHandler = require("./middlewares/error-handler");
 App.use(ErrorHandler.ErrorHandler);
+
+mongoConnect().then(() => {
+    App.listen(PORT, () => {
+        console.log(`Server is running in port : ${PORT}`);
+    });
+});

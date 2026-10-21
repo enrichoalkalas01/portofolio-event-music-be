@@ -1,231 +1,163 @@
 // Library
 const Bcrypt = require("bcrypt");
-const cryptr = require("cryptr");
-const Cryptr = new cryptr(process.env.SECRET_KEY || "S3cr3tsN0Rump1!!!");
 const validator = require("fastest-validator");
-const Moment = require("moment");
 
 // Schema
 const UserModel = require("../libs/mongodb/schema/users");
 
 // Utils
-const {
-    CreateTokenJWTCallBack,
-    getJWTExpiration,
-    calculateTTLFromJWT,
-    decodeJWT,
-    DecodeJWTCallBack,
-    getJWTExpirationInfo,
-} = require("../middlewares/token");
-const {
-    ResponseHandlerSuccess,
-} = require("../middlewares/response-handler");
+const { CreateTokenJWTCallBack } = require("../middlewares/token");
+const { VerifyAuthorizationFunction } = require("../middlewares/authorization");
+const { ResponseHandlerSuccess } = require("../middlewares/response-handler");
 
 // Setup
 const v = new validator();
-const schemaValidationCredentials = {
-    username: { type: "string", min: 2, max: 255 },
+const schemaLogin = {
+    username: { type: "string", min: 2, max: 255, trim: true },
     password: { type: "string", min: 2, max: 255 },
+    $$strict: "remove",
+};
+const schemaRegister = {
+    username: {
+        type: "string",
+        min: 3,
+        max: 30,
+        trim: true,
+        lowercase: true,
+        pattern: /^[a-z0-9._-]+$/i,
+        messages: { stringPattern: "Username may only contain letters, numbers, dot, dash and underscore." },
+    },
+    password: { type: "string", min: 6, max: 255 },
+    email: { type: "email", normalize: true },
+    firstname: { type: "string", max: 100, optional: true },
+    lastname: { type: "string", max: 100, optional: true },
+    fullname: { type: "string", max: 200, optional: true },
+    phonenumber: { type: "string", max: 30, optional: true },
+    $$strict: "remove",
+};
+
+const publicUser = (user) => ({
+    _id: user._id,
+    username: user.username,
+    fullname: user.fullname,
+    phonenumber: user.phonenumber,
+    email: user.email,
+    avatar: user.avatar,
+    role: user.role || "user",
+});
+
+const issueTokens = async (user) => {
+    const user_data = {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        type: user.role || "user",
+    };
+
+    const [refresh, access] = await Promise.all([
+        CreateTokenJWTCallBack({
+            expired_number: 7,
+            expired_type: "day",
+            source_from: "account",
+            token_type: "refresh_token",
+            id: user._id,
+            user_data,
+        }),
+        CreateTokenJWTCallBack({
+            expired_number: 1,
+            expired_type: "day",
+            source_from: "account",
+            token_type: "access_token",
+            id: user._id,
+            user_data,
+        }),
+    ]);
+
+    if (!refresh?.status || !access?.status) {
+        throw { name: "Failed to create token!", status: 500, message: "Failed to create token!" };
+    }
+
+    return {
+        access_token: access.data,
+        refresh_token: refresh.data,
+        session_token: 0,
+        sso_refresh_token: 0,
+        expired_rf: refresh.exp,
+        expired: access.exp,
+        type: user.role || "user",
+    };
 };
 
 const Login = async (req, res, next) => {
-    const { username, password } = req.body;
-
     try {
-        const validatedRequest = v.validate(
-            { ...req.body },
-            schemaValidationCredentials,
-        );
-
-        if (!validatedRequest || validatedRequest?.length > 0) {
-            throw {
-                name: "Error Validation",
-                status: 400,
-                message: "Error to validate request.",
-                errorsData: validatedRequest,
-            };
+        const errors = v.validate(req.body, schemaLogin);
+        if (errors !== true) {
+            throw { name: "Error Validation", status: 400, message: "Error to validate request.", errorsData: errors };
         }
 
-        // Check exist user
+        const identifier = String(req.body.username).trim().toLowerCase();
         const userData = await UserModel.findOne({
-            $or: [
-                { username: { $regex: new RegExp(username) } },
-                { email: { $regex: new RegExp(username) } },
-            ],
+            $or: [{ username: identifier }, { email: identifier }],
         });
 
-        if (!userData) {
-            throw {
-                name: "Error User",
-                status: 400,
-                message: "User is not exist",
-                errorsData: [],
-            };
+        // Same message for unknown user and wrong password: do not leak which one failed.
+        const invalid = { name: "Error auth.", status: 401, message: "Wrong username or password!" };
+        if (!userData) throw invalid;
+
+        const matching = await Bcrypt.compare(req.body.password, userData.password);
+        if (!matching) throw invalid;
+
+        if (userData.isActive === false) {
+            throw { name: "Error auth.", status: 403, message: "Account is not active." };
         }
 
-        const MatchingPassword = await Bcrypt.compare(
-            password,
-            userData?.password,
-        );
+        const token = await issueTokens(userData);
 
-        if (!MatchingPassword) {
-            throw {
-                name: "Error auth.",
-                status: 400,
-                message: "Failed to login user. Wrong username or password!",
-            };
-        }
-
-        const Datas = userData.toJSON();
-
-        // Filter data yang akan di pass
-        const DataPassing = {
-            _id: Datas._id,
-            username: Datas.username,
-            firstname: Datas.firstname,
-            lastname: Datas.lastname,
-            fullname: Datas.fullname,
-            phonenumber: Datas.phonenumber,
-            email: Datas.email,
-        };
-
-        const [createRefreshToken, createAccessToken] = await Promise.all([
-            CreateTokenJWTCallBack({
-                expired_number: 1,
-                expired_type: "day",
-                source_from: "account",
-                token_type: "refresh_token",
-                firstname: DataPassing?.firstname,
-                id: DataPassing?._id,
-                user_data: {
-                    id: DataPassing?._id,
-                    username: DataPassing?.username,
-                    email: DataPassing?.email,
-                    type: Datas?.typeUser,
-                },
-            }),
-            CreateTokenJWTCallBack({
-                expired_number: 1,
-                expired_type: "day",
-                source_from: "account",
-                token_type: "access_token",
-                firstname: DataPassing?.firstname,
-                id: DataPassing?._id,
-                user_data: {
-                    id: DataPassing?._id,
-                    username: DataPassing?.username,
-                    email: DataPassing?.email,
-                    type: Datas?.typeUser,
-                },
-            }),
-        ]);
-
-        if (!createRefreshToken?.status || !createAccessToken?.status) {
-            throw {
-                name: "Failed to create token!",
-                status: 500,
-                message: "Failed to create token!",
-            };
-        }
-
-        DataPassing["token"] = {
-            access_token: createAccessToken.data,
-            refresh_token: createRefreshToken.data,
-            session_token: 0, // SSO session token
-            sso_refresh_token: 0, // SSO refresh token
-            expired_rf: createRefreshToken.exp,
-            expired: createAccessToken.exp,
-            type: Datas?.additional_info?.type_user,
-        };
-
-        ResponseHandlerSuccess({ req: req, res: res, data: DataPassing });
+        ResponseHandlerSuccess({
+            req,
+            res,
+            data: { ...publicUser(userData), token },
+            message: "Login Success",
+        });
     } catch (error) {
         next(error);
     }
 };
 
 const Register = async (req, res, next) => {
-    const {
-        username,
-        password,
-        firstname,
-        lastname,
-        fullname,
-        phonenumber,
-        email,
-    } = req.body;
-
     try {
-        const validatedRequest = v.validate(
-            { ...req.body },
-            schemaValidationCredentials
-        );
-
-        if (!validatedRequest || validatedRequest?.length > 0) {
-            throw {
-                name: "Error Validation",
-                status: 400,
-                message: "Error to validate request.",
-                errorsData: validatedRequest,
-            };
+        const errors = v.validate(req.body, schemaRegister);
+        if (errors !== true) {
+            throw { name: "Error Validation", status: 400, message: "Error to validate request.", errorsData: errors };
         }
 
-        // Check Exist Username or Emails
-        const checkExistData = await UserModel.findOne({
-            $or: [{ username: username }, { email: email }],
+        const { username, password, firstname, lastname, fullname, phonenumber, email } = req.body;
+
+        const exists = await UserModel.findOne({
+            $or: [{ username: username.toLowerCase() }, { email: email.toLowerCase() }],
+        });
+        if (exists) {
+            throw { name: "Error username or email", status: 409, message: "Username or email is already registered." };
+        }
+
+        const hashed = await Bcrypt.hash(password, 12);
+        const name = fullname || [firstname, lastname].filter(Boolean).join(" ") || null;
+
+        const created = await UserModel.create({
+            username,
+            password: hashed,
+            email,
+            fullname: name,
+            phonenumber: phonenumber || null,
+            role: "user",
+            isActive: true,
         });
 
-        if (checkExistData) {
-            throw {
-                name: "Error username or email",
-                status: 400,
-                message: "User or email is exist",
-                errorsData: [],
-            };
-        }
-
-        const GeneratePasswordBcrypt = await Bcrypt.hash(password, 12);
-        const GeneratePasswordCryptr = await Cryptr.encrypt(password);
-        if (!GeneratePasswordBcrypt || !GeneratePasswordCryptr) {
-            throw {
-                name: "Error auth.",
-                status: 400,
-                message: "Failed to generate password.",
-                errorsData: [],
-            };
-        }
-
-        // console.log("Password Bcrypt : ", GeneratePasswordBcrypt);
-        // console.log("Password Cryptr : ", GeneratePasswordCryptr);
-
-        const DataPassing = {
-            username: username,
-            password: GeneratePasswordBcrypt,
-            firstname: firstname || null,
-            lastname: lastname || null,
-            fullname: fullname || null,
-            email: email || null,
-            phonenumber: phonenumber || null,
-            additional_info: {
-                visible_password: GeneratePasswordCryptr,
-                is_active: false, // active, not_active
-                type_user: "guest", // guest, admin, member, user
-            },
-        };
-
-        let create = await UserModel.create(DataPassing);
-        if (!create) {
-            throw {
-                name: "Error to register",
-                status: 500,
-                message: "Failed to create user data.",
-                errorsData: [],
-            };
-        }
-
         ResponseHandlerSuccess({
-            req: req,
-            res: res,
+            req,
+            res,
+            status: 201,
+            data: publicUser(created),
             message: "Successfull to create data user",
         });
     } catch (error) {
@@ -233,7 +165,38 @@ const Register = async (req, res, next) => {
     }
 };
 
+// POST /authentication/refresh-token { rftc }
+const RefreshToken = async (req, res, next) => {
+    try {
+        const tokenUser = await VerifyAuthorizationFunction({ refresh_token: req.body?.rftc });
+        if (!tokenUser?.id) throw { status: 401, message: "Invalid refresh token." };
+
+        const user = await UserModel.findOne({ _id: tokenUser.id, username: tokenUser.username });
+        if (!user || user.isActive === false) throw { status: 401, message: "Invalid refresh token." };
+
+        const token = await issueTokens(user);
+        ResponseHandlerSuccess({ req, res, data: token, message: "Refresh Success" });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// GET /authentication/me
+const Me = async (req, res, next) => {
+    try {
+        const user = await UserModel.findOne({ _id: req.user.id }).select(
+            "-password -activationToken -activationExpires",
+        );
+        if (!user) throw { status: 404, message: "User not found" };
+        ResponseHandlerSuccess({ req, res, data: user, message: "Get Me Success" });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     Login,
-    Register
-}
+    Register,
+    RefreshToken,
+    Me,
+};

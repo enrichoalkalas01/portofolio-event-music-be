@@ -16,7 +16,7 @@ const ResponseHandlerSuccess = ({
         DataPassing["data"] = data;
     }
 
-    if (total) {
+    if (typeof total === "number") {
         DataPassing["total"] = total;
     }
 

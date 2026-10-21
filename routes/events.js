@@ -8,14 +8,21 @@ const Events = require("../controllers/events");
 const {
     CheckAuthorization,
     VerifyAuthorization,
+    OptionalAuthorization,
+    RequireAdmin,
 } = require("../middlewares/authorization");
 
+const adminOnly = [CheckAuthorization, VerifyAuthorization, RequireAdmin];
+
 // Routes
-Routes.post("/", [CheckAuthorization, VerifyAuthorization], Events.Create);
-Routes.put("/:id", [CheckAuthorization, VerifyAuthorization], Events.Update);
-Routes.delete("/:id", [CheckAuthorization, VerifyAuthorization], Events.Delete);
-Routes.get("/", Events.Get);
-Routes.get("/coming-soon", Events.GetListlByComingSoon);
-Routes.get("/:id", Events.GetDetailByID);
+Routes.post("/", adminOnly, Events.Create);
+Routes.put("/:id", adminOnly, Events.Update);
+Routes.delete("/:id", adminOnly, Events.Delete);
+
+// Public (admins with a token also see DRAFT / non-active events)
+Routes.get("/", OptionalAuthorization, Events.Get);
+Routes.get("/coming-soon", OptionalAuthorization, Events.GetListlByComingSoon);
+Routes.get("/categories", Events.GetCategories);
+Routes.get("/:id", OptionalAuthorization, Events.GetDetailByID);
 
 module.exports = Routes;
